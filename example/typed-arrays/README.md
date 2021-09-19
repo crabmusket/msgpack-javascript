@@ -56,7 +56,7 @@ Note that the length of `data`, and therefore the value of `YYYYYYYY_YYYYYYYY` i
 
 A Float32Array containing 10 values will have a `data` size starting at 42 bytes if there is no alignment:
 
-- 1 byte of `artype` = `0x??`
+- 1 byte of `artype` = `0x09`
 - 1 byte of `AAAAAAAA` = 0
 - 0 bytes of `align`
 - 40 bytes of `vals`
@@ -64,7 +64,7 @@ A Float32Array containing 10 values will have a `data` size starting at 42 bytes
 A Float32Array should be aligned on 4-byte boundaries, so there may need to be up to 3 bytes of padding.
 In that case, the total size of `data` woulb become so this may increase to 45 bytes:
 
-- 1 byte of `artype` = `0x??`
+- 1 byte of `artype` = `0x09`
 - 1 byte of `AAAAAAAA` = 3
 - 3 bytes of `align`
 - 40 bytes of `vals`
@@ -91,7 +91,7 @@ So to put the entire example of a 10-entry Float32Array together, it would be re
 
 ```
 +--------+--------+--------+--------+--------+========+========+
-|  0xc7  |  0x2D  |  type  |  0x??  |  0x03  |3 zeros |  vals  |
+|  0xc7  |  0x2D  |  type  |  0x09  |  0x03  |3 zeros |  vals  |
 +--------+--------+--------+--------+--------+========+========+
 ```
 
@@ -100,7 +100,7 @@ Where:
 - `0xc7` is the MessagePack type for `ext 8`
 - `0x2D` is 45, the length of the TypedArray payload described above
 - `type` is the extension type number
-- `0x??` is the `artype` number for Float32Array
+- `0x09` is the `artype` number for Float32Array
 - `0x03` is the number of alignment bytes
 - 3 zeros are required for alignment
 - `vals` contains the actual floating-point data
