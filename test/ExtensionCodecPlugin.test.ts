@@ -1,6 +1,6 @@
 import assert from "assert";
 import { encode, decode, Encoder, ExtensionCodec, ExtData, decodeAsync } from "../src";
-import { typedArrays } from "../example/typed-arrays-plugin";
+import { typedArrays } from "../example/typed-arrays/plugin";
 
 describe("ExtensionCodecPlugin", () => {
   context("custom extension plugin", () => {
