@@ -1,5 +1,5 @@
-import type { Encoder } from "../src/Encoder";
-import { ensureUint8Array } from "../src/utils/typedArrays";
+import type { Encoder } from "../../src/Encoder";
+import { ensureUint8Array } from "../../src/utils/typedArrays";
 
 export function typedArrays<C>({type}: {type: number}) {
   const TypedArray = Object.getPrototypeOf(Int8Array);

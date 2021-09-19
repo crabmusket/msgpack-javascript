@@ -1,7 +1,7 @@
-// ts-node example/typed-array-plugin-example.ts
+// ts-node example/typed-arrays/example.ts
 
-import { encode, decode, ExtensionCodec } from "../src";
-import { typedArrays } from "../example/typed-arrays-plugin";
+import { encode, decode, ExtensionCodec } from "../../src";
+import { typedArrays } from "./plugin";
 
 const extensionCodec = new ExtensionCodec();
 extensionCodec.registerPlugin(typedArrays({ type: 1 }));
