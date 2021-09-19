@@ -2,6 +2,7 @@
 
 import { ExtData } from "./ExtData";
 import { timestampExtension } from "./timestamp";
+import type { Encoder } from "./Encoder";
 
 export type ExtensionDecoderType<ContextType> = (
   data: Uint8Array,
@@ -11,11 +12,14 @@ export type ExtensionDecoderType<ContextType> = (
 
 export type ExtensionEncoderType<ContextType> = (input: unknown, context: ContextType) => Uint8Array | null;
 
+export type ExtensionEncoderPluginType<ContextType> = (encoder: Encoder<ContextType>, depth: number, input: unknown, context: ContextType) => boolean;
+
 // immutable interfce to ExtensionCodec
 export type ExtensionCodecType<ContextType> = {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   __brand?: ContextType;
   tryToEncode(object: unknown, context: ContextType): ExtData | null;
+  tryToEncodePlugin(encoder: Encoder<ContextType>, depth: number, object: unknown, context: ContextType): boolean;
   decode(data: Uint8Array, extType: number, context: ContextType): unknown;
 };
 
@@ -34,6 +38,7 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
   // custom extensions
   private readonly encoders: Array<ExtensionEncoderType<ContextType> | undefined | null> = [];
   private readonly decoders: Array<ExtensionDecoderType<ContextType> | undefined | null> = [];
+  private readonly rawEncoders: Array<ExtensionEncoderPluginType<ContextType> | undefined | null> = [];
 
   public constructor() {
     this.register(timestampExtension);
@@ -57,6 +62,24 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
       const index = 1 + type;
       this.builtInEncoders[index] = encode;
       this.builtInDecoders[index] = decode;
+    }
+  }
+
+  public registerPlugin({
+    type,
+    encode,
+    decode,
+  }: {
+    type: number;
+    encode: ExtensionEncoderPluginType<ContextType>;
+    decode: ExtensionDecoderType<ContextType>;
+  }): void {
+    if (type >= 0) {
+      // custom extensions
+      this.rawEncoders[type] = encode;
+      this.decoders[type] = decode;
+    } else {
+      throw new Error("cannot register plugin for builtin type");
     }
   }
 
@@ -90,6 +113,20 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
       return object;
     }
     return null;
+  }
+
+  public tryToEncodePlugin(encoder: Encoder<ContextType>, depth: number, object: unknown, context: ContextType): boolean {
+    for (let i = 0; i < this.rawEncoders.length; i++) {
+      const encodeExt = this.rawEncoders[i];
+      if (encodeExt != null) {
+        const accepted = encodeExt(encoder, depth, object, context);
+        if (accepted) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   public decode(data: Uint8Array, type: number, context: ContextType): unknown {

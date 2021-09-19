@@ -185,6 +185,11 @@ export class Encoder<ContextType = undefined> {
   }
 
   private encodeObject(object: unknown, depth: number) {
+    const pluginRan = this.extensionCodec.tryToEncodePlugin(this, depth, object, this.context);
+    if (pluginRan) {
+      return;
+    }
+
     // try to encode objects with custom codec first of non-primitives
     const ext = this.extensionCodec.tryToEncode(object, this.context);
     if (ext != null) {
