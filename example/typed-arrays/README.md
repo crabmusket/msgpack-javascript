@@ -62,16 +62,18 @@ A Float32Array containing 10 values will have a `data` size starting at 42 bytes
 - 40 bytes of `vals`
 
 A Float32Array should be aligned on 4-byte boundaries, so there may need to be up to 3 bytes of padding.
-In that case, the total size of `data` woulb become so this may increase to 45 bytes:
+In that case, the total size of `data` would become 45 bytes:
 
 - 1 byte of `artype` = `0x09`
 - 1 byte of `AAAAAAAA` = 3
 - 3 bytes of `align`
 - 40 bytes of `vals`
 
-Since the extension array is wrapped with its own header, there is some additional structure before this content.
+The exact amount of padding depends on what data has been encoded _before_ the TypedArray is encountered.
 
+Since the extension array is wrapped with its own header, there is some additional structure before this content.
 See the [MessagePack spec for extensions](https://github.com/msgpack/msgpack/blob/master/spec.md#ext-format-family).
+
 The content of a TypedArray object is inserted after the extension header.
 For example, an extension where the size of the encoded array is up to (2^8)-1 bytes will be laid out like this:
 
