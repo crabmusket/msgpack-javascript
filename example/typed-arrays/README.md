@@ -125,4 +125,4 @@ As the top answer states,
 
 [This post](http://www.songho.ca/misc/alignment/dataalign.html) contains more details.
 So the typical approach if you receive some data from a MessagePack buffer which you want to access as a TypedArray is to copy the data out into a new buffer entirely.
-Because new buffers are correctly aligned (e.g. their first byte falls on a [max_align_t](https://en.cppreference.com/w/c/types/max_align_t) memory address), and the offset will be 0 for the new buffer, your access will work fine.
+Because new buffers are correctly aligned (i.e. their first byte falls on a [max_align_t](https://en.cppreference.com/w/c/types/max_align_t) memory address), and the offset will be 0 for the new buffer, your access will work fine.
