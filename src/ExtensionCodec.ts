@@ -2,7 +2,6 @@
 
 import { ExtData } from "./ExtData";
 import { timestampExtension } from "./timestamp";
-import type { Encoder } from "./Encoder";
 
 export type ExtensionDecoderType<ContextType> = (
   data: Uint8Array,
@@ -10,16 +9,13 @@ export type ExtensionDecoderType<ContextType> = (
   context: ContextType,
 ) => unknown;
 
-export type ExtensionEncoderType<ContextType> = (input: unknown, context: ContextType) => Uint8Array | null;
-
-export type ExtensionEncoderPluginType<ContextType> = (encoder: Encoder<ContextType>, depth: number, input: unknown, context: ContextType) => boolean;
+export type ExtensionEncoderType<ContextType> = (input: unknown, context: ContextType) => Uint8Array | ExtData | null;
 
 // immutable interfce to ExtensionCodec
 export type ExtensionCodecType<ContextType> = {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   __brand?: ContextType;
   tryToEncode(object: unknown, context: ContextType): ExtData | null;
-  tryToEncodePlugin(encoder: Encoder<ContextType>, depth: number, object: unknown, context: ContextType): boolean;
   decode(data: Uint8Array, extType: number, context: ContextType): unknown;
 };
 
@@ -38,7 +34,6 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
   // custom extensions
   private readonly encoders: Array<ExtensionEncoderType<ContextType> | undefined | null> = [];
   private readonly decoders: Array<ExtensionDecoderType<ContextType> | undefined | null> = [];
-  private readonly rawEncoders: Array<ExtensionEncoderPluginType<ContextType> | undefined | null> = [];
 
   public constructor() {
     this.register(timestampExtension);
@@ -65,24 +60,6 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
     }
   }
 
-  public registerPlugin({
-    type,
-    encode,
-    decode,
-  }: {
-    type: number;
-    encode: ExtensionEncoderPluginType<ContextType>;
-    decode: ExtensionDecoderType<ContextType>;
-  }): void {
-    if (type >= 0) {
-      // custom extensions
-      this.rawEncoders[type] = encode;
-      this.decoders[type] = decode;
-    } else {
-      throw new Error("cannot register plugin for builtin type");
-    }
-  }
-
   public tryToEncode(object: unknown, context: ContextType): ExtData | null {
     // built-in extensions
     for (let i = 0; i < this.builtInEncoders.length; i++) {
@@ -91,7 +68,7 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
         const data = encodeExt(object, context);
         if (data != null) {
           const type = -1 - i;
-          return new ExtData(type, data);
+          return ensureExtData(type, data);
         }
       }
     }
@@ -103,7 +80,7 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
         const data = encodeExt(object, context);
         if (data != null) {
           const type = i;
-          return new ExtData(type, data);
+          return ensureExtData(type, data);
         }
       }
     }
@@ -115,20 +92,6 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
     return null;
   }
 
-  public tryToEncodePlugin(encoder: Encoder<ContextType>, depth: number, object: unknown, context: ContextType): boolean {
-    for (let i = 0; i < this.rawEncoders.length; i++) {
-      const encodeExt = this.rawEncoders[i];
-      if (encodeExt != null) {
-        const accepted = encodeExt(encoder, depth, object, context);
-        if (accepted) {
-          return true;
-        }
-      }
-    }
-
-    return false;
-  }
-
   public decode(data: Uint8Array, type: number, context: ContextType): unknown {
     const decodeExt = type < 0 ? this.builtInDecoders[-1 - type] : this.decoders[type];
     if (decodeExt) {
@@ -138,4 +101,11 @@ export class ExtensionCodec<ContextType = undefined> implements ExtensionCodecTy
       return new ExtData(type, data);
     }
   }
+}
+
+function ensureExtData(type: number, ext: Uint8Array | ExtData) {
+  if (ext instanceof Uint8Array) {
+    return new ExtData(type, ext);
+  }
+  return ext;
 }

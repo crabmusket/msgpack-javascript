@@ -4,7 +4,7 @@ import { encode, decode, ExtensionCodec } from "../../src";
 import { typedArrays } from "./plugin";
 
 const extensionCodec = new ExtensionCodec();
-extensionCodec.registerPlugin(typedArrays({ type: 1 }));
+extensionCodec.register(typedArrays({ type: 1 }));
 
 const int16Array = new Int16Array([-4, 1, 5]);
 const float32Array = new Float32Array([1, -2, 3, 1e-9, 5]);
